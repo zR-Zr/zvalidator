@@ -6,7 +6,7 @@ import (
 )
 
 // 存储自定义验证函数
-var validatorContainer = map[string]ValidatorFunc{
+var validatorContainer = map[string]ValidatorHandler{
 	"required": isRequired(),
 	"min":      min,
 	"max":      max,
@@ -14,7 +14,7 @@ var validatorContainer = map[string]ValidatorFunc{
 	"email":    isEmail,
 }
 
-func RegisterValidator(typeName string, validatorFunc ValidatorFunc) {
+func RegisterValidator(typeName string, validatorFunc ValidatorHandler) {
 	validatorContainer[typeName] = validatorFunc
 }
 

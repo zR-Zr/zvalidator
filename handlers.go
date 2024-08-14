@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func isRequired() ValidatorFunc {
+func isRequired() ValidatorHandler {
 	return func(value any, extra ...any) bool {
 		if value == nil {
 			return false
