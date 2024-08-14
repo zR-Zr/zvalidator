@@ -18,7 +18,7 @@ func RegisterValidator(typeName string, validatorFunc ValidatorHandler) {
 	validatorContainer[typeName] = validatorFunc
 }
 
-func Validate(data map[string]any, rules Rules) (bool, map[string]string) {
+func MapValidate(data map[string]any, rules Rules) (bool, map[string]string) {
 	errors := make(map[string]string)
 
 	for field, fieldRules := range rules {
@@ -67,6 +67,15 @@ func Validate(data map[string]any, rules Rules) (bool, map[string]string) {
 	return len(errors) == 0, errors
 }
 
+func Validate(data any, rules Rules) (bool, map[string]string) {
+	useMap := structToMap(data)
+	if (useMap == nil) || (rules == nil) {
+		return false, nil
+	}
+
+	return MapValidate(useMap, rules)
+}
+
 func isEmptyValue(v reflect.Value) bool {
 	switch v.Kind() {
 	case reflect.Interface, reflect.Ptr:
@@ -76,4 +85,31 @@ func isEmptyValue(v reflect.Value) bool {
 	default:
 		return v.IsZero()
 	}
+}
+
+func structToMap(data any) map[string]any {
+	dataMap := make(map[string]any)
+	v := reflect.ValueOf(data)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	if v.Kind() != reflect.Struct {
+		return nil
+	}
+
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Type().Field(i)
+		fieldName := field.Tag.Get("json")
+		if fieldName == "" {
+			fieldName = field.Name
+		}
+		if fieldName == "-" {
+			continue
+		}
+
+		dataMap[fieldName] = v.Field(i).Interface()
+	}
+
+	return dataMap
 }
