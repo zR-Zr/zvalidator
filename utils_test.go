@@ -40,7 +40,7 @@ func TestStructToMap(t *testing.T) {
 		"age":              25,
 		"email":            "john.doe@example.com",
 		"password":         "password123",
-		"comfirm_password": "password123",
+		"confirm_password": "password123",
 		"city":             "北京",
 		"address": map[string]any{
 			"city":   "Beijing",
