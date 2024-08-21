@@ -4,6 +4,18 @@ import (
 	"errors"
 )
 
+type ValidationErrors struct {
+	Errors map[string]string
+}
+
+func (ves ValidationErrors) Error() string {
+	return "validation error"
+}
+
+func (ves ValidationErrors) GetErrors() map[string]string {
+	return ves.Errors
+}
+
 type Validator func(value any, rawData map[string]any, rule Rule) bool
 
 var validators = map[string]Validator{
@@ -11,6 +23,10 @@ var validators = map[string]Validator{
 	"min":      minValidator,
 	"max":      maxValidator,
 	"range":    rangeValidator,
+}
+
+func RegisterValidator(validatorType string, validator Validator) {
+	validators[validatorType] = validator
 }
 
 func Validate(data map[string]any, rules Rules) (bool, map[string]string) {
@@ -54,4 +70,18 @@ func Validate(data map[string]any, rules Rules) (bool, map[string]string) {
 	}
 
 	return len(validationErrors) == 0, validationErrors
+}
+
+func ValidateStruct(s any, rules Rules) error {
+	data, err := structToMap(s)
+	if err != nil {
+		return err
+	}
+
+	isValid, validationErrors := Validate(data, rules)
+	if !isValid {
+		return ValidationErrors{Errors: validationErrors}
+	}
+
+	return nil
 }

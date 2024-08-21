@@ -15,7 +15,6 @@ func Rangef(min, max float64) *Range {
 	return &Range{Min: min, Max: max}
 }
 
-
 type CustomValidator func(data any, rawData map[string]any) bool
 
 type Rule struct {
@@ -26,6 +25,7 @@ type Rule struct {
 	Range           *Range
 	Pattern         regexp.Regexp
 	Email           bool
+	In              []any
 	Criteria        any
 	CustomValidator CustomValidator
 }

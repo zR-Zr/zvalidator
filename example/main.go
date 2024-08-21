@@ -7,7 +7,40 @@ import (
 	"github.com/zR-Zr/zvalidator.git"
 )
 
+// "age":             199,
+// 		"email":           "johndoe@example.com",
+// 		"password":        "passwor",
+// 		"confirmPassword": "password123",
+// 		"city":            "北京",
+// 		"address": map[string]interface{}{
+// 			"city":   " ", // 空字符串，会触发 required 验证
+// 			"street": "Short St",
+// 		},
+
+type Address struct {
+	City   string `json:"city"`
+	Street string `json:"street"`
+}
+
+type User struct {
+	Name            string   `json:"name"`
+	Age             int      `json:"age"`
+	Email           string   `json:"email"`
+	Password        string   `json:"password"`
+	ConfirmPassword string   `json:"comfirm_password"`
+	City            string   `json:"city"`
+	Address         *Address `json:"address"`
+}
+
 func main() {
+
+}
+
+func structExample() {
+
+}
+
+func mapExample() {
 	rules := zvalidator.Rules{
 		"name": {
 			zvalidator.RequiredRule("姓名不能为空"),
