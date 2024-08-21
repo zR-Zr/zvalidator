@@ -27,7 +27,7 @@ rules := zvalidator.Rules{
 }
 ```
 
-### 执行验证
+### 验证map类型数据
 
 ```go
 data := map[string]interface{}{
@@ -42,12 +42,38 @@ if isValid {
     // 验证失败，处理错误信息
     fmt.Println(errors)
 }
+
+```
+
+### 验证结构体类型数据
+
+```go
+type User struct {
+    Name  string `json:"name"`
+    Email string `json:"email"`
+    // ... 其他字段
+}
+
+user := User{
+    Name:  "John Doe",
+    Email: "john.doe@example.com",
+    // ...
+}
+
+err := zvalidator.ValidateStruct(user, rules)
+
+if err != nil {
+    // 验证失败，处理错误信息
+    fmt.Println(err)
+} else {
+    // 验证通过
+}
 ```
 
 ### 自定义验证器
 
 ```go
-ules := zvalidator.Rules{
+rules := zvalidator.Rules{
     "email": {
         zvalidator.Rule{
             Type:    "email",
@@ -62,6 +88,7 @@ ules := zvalidator.Rules{
 ```
 
 ### 嵌套结构体
+
 ```go
 rules := zvalidator.Rules{
     "address.city": {
@@ -75,6 +102,7 @@ data := map[string]interface{}{
     },
 }
 ```
+
 
 ## 许可证
 
