@@ -1,115 +1,57 @@
 package zvalidator
 
 import (
-	"fmt"
-	"reflect"
+	"errors"
 )
 
-// 存储自定义验证函数
-var validatorContainer = map[string]ValidatorHandler{
-	"required": isRequired(),
-	"min":      min,
-	"max":      max,
-	"numeric":  IsNumeric,
-	"email":    isEmail,
+type Validator func(value any, rawData map[string]any, rule Rule) bool
+
+var validators = map[string]Validator{
+	"required": requiredValidator,
+	"min":      minValidator,
+	"max":      maxValidator,
+	"range":    rangeValidator,
 }
 
-func RegisterValidator(typeName string, validatorFunc ValidatorHandler) {
-	validatorContainer[typeName] = validatorFunc
-}
-
-func MapValidate(data map[string]any, rules Rules) (bool, map[string]string) {
-	errors := make(map[string]string)
+func Validate(data map[string]any, rules Rules) (bool, map[string]string) {
+	validationErrors := make(map[string]string)
 
 	for field, fieldRules := range rules {
-		// 使用 rules 的key ,到 data 中取值
-		fieldValue, ok := data[field]
+		fieldValue, ok := getFieldValue(data, field)
 		if !ok {
 			fieldValue = nil
 		}
 
-		for _, rule := range fieldRules { // Rule 数组
-			// 如果该 字段不是必填, 且没有值则跳过, (处理,不是必填项,但是如果填入,就要验证格式的情况)
-			// 例如 email 非必填,但是如果填了,就要复合email的格式
-			if rule.Type != "required" && (fieldValue == nil || isEmptyValue(reflect.ValueOf(fieldValue))) {
+		for _, rule := range fieldRules {
+
+			if rule.Type != "required" && (fieldValue == nil || isEmptyValue(fieldValue)) {
 				continue
 			}
 
 			isValid := true
 
-			// 1. 优先使用 rule.Validators 中自定义的验证函数
-			if len(rule.Validators) > 0 {
-				for _, ruleInnerValidator := range rule.Validators {
-					// 验证失败
-					if !ruleInnerValidator(fieldValue, rule.Value) {
-						errors[field] = rule.Message
-						isValid = false // 设置验证失败标志
-						break           // 如果一个验证眼熟失败,计算验证失败,不继续验证
-					}
+			if rule.CustomValidator != nil {
+				if !rule.CustomValidator(fieldValue, data) {
+					validationErrors[field] = rule.Message
+					isValid = false
 				}
 			} else {
-				// 如果 ruoe.Validators 为空, 则使用 validatorContainer 中 注册的验证函数
-				if registedValidator, ok := validatorContainer[rule.Type]; ok {
-					if !registedValidator(fieldValue, rule.Value) {
-						errors[field] = rule.Message
+				if registedValidator, ok := validators[rule.Type]; ok {
+					if !registedValidator(fieldValue, data, rule) {
+						validationErrors[field] = rule.Message
 						isValid = false
 					}
 				} else {
-					panic(fmt.Sprintf("不支持的验证类型: %s", rule.Type))
+
+					panic(errors.New("unknown validator type: " + rule.Type))
 				}
 			}
+
 			if !isValid {
-				break // 当前规则验证失败,跳到下一个规则
+				break
 			}
 		}
 	}
 
-	return len(errors) == 0, errors
-}
-
-func Validate(data any, rules Rules) (bool, map[string]string) {
-	useMap := structToMap(data)
-	if (useMap == nil) || (rules == nil) {
-		return false, nil
-	}
-
-	return MapValidate(useMap, rules)
-}
-
-func isEmptyValue(v reflect.Value) bool {
-	switch v.Kind() {
-	case reflect.Interface, reflect.Ptr:
-		return v.IsNil()
-	case reflect.Array, reflect.Map, reflect.Slice, reflect.String, reflect.Chan:
-		return v.Len() == 0
-	default:
-		return v.IsZero()
-	}
-}
-
-func structToMap(data any) map[string]any {
-	dataMap := make(map[string]any)
-	v := reflect.ValueOf(data)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-
-	if v.Kind() != reflect.Struct {
-		return nil
-	}
-
-	for i := 0; i < v.NumField(); i++ {
-		field := v.Type().Field(i)
-		fieldName := field.Tag.Get("json")
-		if fieldName == "" {
-			fieldName = field.Name
-		}
-		if fieldName == "-" {
-			continue
-		}
-
-		dataMap[fieldName] = v.Field(i).Interface()
-	}
-
-	return dataMap
+	return len(validationErrors) == 0, validationErrors
 }
