@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/zR-Zr/zvalidator.git"
+	"github.com/zR-Zr/zvalidator"
 )
 
 // "age":             199,

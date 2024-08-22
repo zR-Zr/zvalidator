@@ -3,7 +3,7 @@ package zvalidator
 import (
 	"regexp"
 
-	"github.com/zR-Zr/zvalidator.git/optional"
+	"github.com/zR-Zr/zvalidator/optional"
 )
 
 type Range struct {
